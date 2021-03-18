@@ -1,0 +1,53 @@
+{
+    "Clothes": [
+        "Shirt",
+        "Trousers",
+        "Tie",
+        "Blazer",
+        "Jumper",
+        "Sweatshirt",
+        "Hoodie",
+        "Pyjamas",
+        "Jeans",
+        "Sock",
+        "Scarf",
+        "Gloves",
+        "Hat",
+        "Balaclava"
+    ],
+    "Tech": [
+        "Tablet",
+        "Phone",
+        "Laptop",
+        "Keyboard",
+        "Mouse",
+        "Headset",
+        "Peripherals",
+        "Application",
+        "Monitor"
+    ],
+    "Animals": [
+        "Cat",
+        "Dog",
+        "Mouse",
+        "Squirrel",
+        "Lion",
+        "Elephant",
+        "Rhino",
+        "Bird",
+        "Giraffe",
+        "Hedgehog"
+    ],
+    "Food": [
+        "Cheese",
+        "Chicken",
+        "Sausage",
+        "Pizza",
+        "Pepperoni",
+        "Pepper",
+        "Lettuce",
+        "Chips",
+        "Bread",
+        "Fish"
+    ]
+}
