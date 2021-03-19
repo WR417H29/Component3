@@ -1,0 +1,16 @@
+{
+    "light": {
+        "background": "WHITE",
+        "buttons": "BLUE",
+        "buttonsVar2": "RED",
+        "text": "BLACK",
+        "lines": "BLACK"
+    },
+    "dark": {
+        "background": "DARK_GRAY",
+        "buttons": "DARK_BLUE",
+        "buttonsVar2": "DARK_RED",
+        "text": "WHITE",
+        "lines": "WHITE"
+    }
+}
