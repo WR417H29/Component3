@@ -12,5 +12,6 @@
         "buttonsVar2": "DARK_RED",
         "text": "WHITE",
         "lines": "WHITE"
-    }
+    },
+    "high_contrast": {}
 }
