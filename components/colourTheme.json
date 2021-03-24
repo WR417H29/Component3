@@ -13,5 +13,11 @@
         "text": "WHITE",
         "lines": "WHITE"
     },
-    "high_contrast": {}
+    "high_contrast": {
+        "background": "BLACK",
+        "buttons": "BLUE",
+        "buttonsVar2": "RED",
+        "text": "WHITE",
+        "lines": "WHITE"
+    }
 }

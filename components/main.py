@@ -172,7 +172,7 @@ def mainMenu(COLOUR_SCHEME): # Main Menu Loop
         pygame.display.flip() # refreshing the display
         clock.tick(FPS)
 
-def playMenu(grid, words, wordCoords, cleanWords, COLOUR_SCHEME): # Game Menu Loop
+def playMenu(grid, words, wordCoords, cleanWords, themeName, COLOUR_SCHEME): # Game Menu Loop
     # cleanWords is so that I can display the words the user is to find, as they are flipped backwards on generation.
     startTime = time.time()
     pButtons = []
@@ -268,7 +268,7 @@ def playMenu(grid, words, wordCoords, cleanWords, COLOUR_SCHEME): # Game Menu Lo
         if wordDisplay == []:
             finishTime = time.time()
             totalTime = finishTime - startTime
-            return finishMenu(COLOUR_SCHEME, totalTime)
+            return finishMenu(COLOUR_SCHEME, totalTime, themeName)
 
         curTime = time.time()
         nowTime = curTime - startTime
@@ -340,6 +340,12 @@ def leaderboardMenu(COLOUR_SCHEME): # Leaderboard Menu Loop
 
     pygame.display.set_caption("Leaderboard")
 
+    conn = sql.connect('components/database.db')
+    cursor = conn.cursor()
+
+    data = cursor.execute("SELECT * FROM Players ORDER BY time ASC").fetchall()
+    print(data)
+
     while True: # Beginning a loop for the game
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -355,7 +361,7 @@ def leaderboardMenu(COLOUR_SCHEME): # Leaderboard Menu Loop
         pygame.display.flip()
         clock.tick(FPS)
 
-def finishMenu(COLOUR_SCHEME, timeTaken): # Finish Menu Loop
+def finishMenu(COLOUR_SCHEME, timeTaken, themeName): # Finish Menu Loop
     fButtons = []
     inputBoxes = []
     pygame.display.set_caption("Main Menu") # Settings the title of the game window
@@ -382,7 +388,7 @@ def finishMenu(COLOUR_SCHEME, timeTaken): # Finish Menu Loop
                 for inputBox in inputBoxes: inputBox.writeToText(event.unicode) 
 
         username = nameBox.getText()
-        submitBtn.setParams([username, f"{timeMins}:{timeSecs:02d}", COLOUR_SCHEME])
+        submitBtn.setParams([username, f"{timeMins}:{timeSecs:02d}", themeName, COLOUR_SCHEME])
         
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']]) # refreshing the screen
         for x in fButtons: x.draw() # drawing the buttons to screen
@@ -439,12 +445,13 @@ def themeChoice(COLOUR_SCHEME): # Theme Choice Menu Loop
     themeList = [] # creating a list to store the theme titles
 
     for x in themes.keys(): themeList.append(x) # appending theme names to a list
-    
+    themeNames = [x for x in themes.keys()]
+
     themeCounter = 0
     for idx, theme in enumerate(themeList):
         if themeCounter >= 13: # if there are more than 13 themes in the current column
             themeCounter = 0 # reset themeCounter
-        themeButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttonsVar2']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=wordsearchGen, geo=[(idx//13)*100, (themeCounter+1)*50, 100, 50], text=theme, params=[theme, COLOUR_SCHEME])) # creating buttons with theme names
+        themeButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttonsVar2']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=wordsearchGen, geo=[(idx//13)*100, (themeCounter+1)*50, 100, 50], text=theme, params=[theme, themeNames[idx], COLOUR_SCHEME])) # creating buttons with theme names
         themeCounter += 1
         # here i am using counters and ifs to write the theme buttons across the screen so they dont go off
 
@@ -463,7 +470,7 @@ def themeChoice(COLOUR_SCHEME): # Theme Choice Menu Loop
         pygame.display.flip()   
         clock.tick(FPS)
 
-def wordsearchGen(theme, COLOUR_SCHEME): # This generates the words for the grid, and the size of the grid
+def wordsearchGen(theme, themeName, COLOUR_SCHEME): # This generates the words for the grid, and the size of the grid
     with open("components/themes.json","r") as f:
         themes = json.load(f)
         data = themes[theme] # Assigning data to be the list of words within the theme.
@@ -506,7 +513,7 @@ def wordsearchGen(theme, COLOUR_SCHEME): # This generates the words for the grid
 
     grid = fillGrid(grid) # filling the gaps in the grid
 
-    return playMenu(grid, sWords, wordLocations, cleanWordList, COLOUR_SCHEME) # returning the grid, wordpositions, and a list of unchanged words to the playMenu function
+    return playMenu(grid, sWords, wordLocations, cleanWordList, themeName, COLOUR_SCHEME) # returning the grid, wordpositions, and a list of unchanged words to the playMenu function
 
 def searchGen(grid, word, words, runs=0): # generating the wordsearch
     curRun = runs # getting the current runs
@@ -579,9 +586,11 @@ def changeColourTheme(COLOUR_SCHEME):
         settings = json.load(f)
     SELECTED_THEME = settings['ColourTheme']
 
-    if SELECTED_THEME.lower() == 'light':
-        SELECTED_THEME = 'dark'
-    else: 
+    if SELECTED_THEME.lower() == 'light': # swapping theme to dark
+        SELECTED_THEME = 'dark' 
+    elif SELECTED_THEME.lower() == 'dark': # swapping theme to high contrast
+        SELECTED_THEME = 'high_contrast'
+    else: # swapping theme to light
         SELECTED_THEME = 'light'
  
     with open('components/settings.json', 'r') as f: 
@@ -595,9 +604,18 @@ def changeColourTheme(COLOUR_SCHEME):
 
     return COLOUR_SCHEME
             
-def addToDatabase(username, timeTaken, COLOUR_SCHEME):
-    print(f"username: {username}")
-    print(f"timeTaken: {timeTaken}")
+def addToDatabase(username, timeTaken, themeName, COLOUR_SCHEME):
+
+    conn = sql.connect("components/database.db")
+    cursor = conn.cursor()
+
+    cursor.execute("CREATE TABLE IF NOT EXISTS Players ( id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(20), themeName VARCHAR(40), time INTEGER ) ")
+
+    cursor.execute(f"INSERT INTO Players(username, themeName, time) VALUES (?, ?, ?)", (username, themeName, timeTaken))
+
+    conn.commit()
+    conn.close()
+
     return mainMenu(COLOUR_SCHEME)
 
 if __name__ == "__main__":
@@ -617,6 +635,7 @@ if __name__ == "__main__":
         "DARK_BLUE": (0, 0, 120),
         "GREEN": (0, 255, 0),
         "RED": (255, 50, 50),
+        "YELLOW": (0, 255, 255),
         "DARK_RED": (120, 0, 0),
         "DARK_GRAY": (25, 25, 25),
         "PASTEL_RED": (255, 173, 173),
