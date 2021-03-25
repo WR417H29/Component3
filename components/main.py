@@ -12,7 +12,7 @@ pygame.init() # initialising the pygame module
 basedir = os.path.join(os.path.abspath(__file__))
 
 class Button:
-    def __init__(self, colour=(0, 0, 0), tColour=(255, 255, 255), func=None, geo=[0, 0, 0, 0], text="", params=[], fontSize=15, hasReturn=False): # Geo = {x, y, w, h}
+    def __init__(self, colour=(0, 0, 0), tColour=(255, 255, 255), func=None, geo=[0, 0, 0, 0], text="", params=[], fontSize=15, hasReturn=False, hasFunc=False): # Geo = {x, y, w, h}
         self.text = text # Text to be displayed
         self.geo = geo # Position of the button
         self.colour = colour # Button Colour
@@ -20,30 +20,36 @@ class Button:
         self.font = pygame.font.SysFont("Arial", fontSize)
         self.params = params
         self.hasReturn = hasReturn
-        if func: self.func = func # Setting the function of the button
+        self.hasFunc = hasFunc
+        if func:
+            self.func = func
+            self.hasFunc = True # Setting the function of the button
     
     def setParams(self, newParams):
         self.params = newParams # re-set paramaters of a function
 
-    def getParams(self):
+    def getParams(self): # get params of button func
         return self.params
 
-    def getHasReturn(self):
+    def getHasReturn(self): # get whether func has return or not
         return self.hasReturn
 
-    def setText(self, newText):
-        self.text = newText
+    def getHasFunc(self): # get whether there is a func or not
+        return self.hasFunc
 
-    def updateTextColour(self, newColour):
+    def setText(self, newText): # changing displayed text
+        self.text = newText
+ 
+    def updateTextColour(self, newColour): # updating the colour of the text
         self.tColour = newColour
 
-    def updateColour(self, newColour):
+    def updateColour(self, newColour): # updating the background colour of the button
         self.colour = newColour
 
-    def draw(self):
+    def draw(self): 
         pygame.draw.rect(window, self.colour, self.geo) # draw the box
         drawnText = self.font.render(self.text, True, self.tColour) # draw the text
-        window.blit(drawnText, pygame.math.Vector2(self.geo[0], self.geo[1])) # draw to screen
+        window.blit(drawnText, pygame.math.Vector2(self.geo[0] + 5, self.geo[1] + 5)) # draw to screen
     
     def callFunc(self, mouse):
         if self.geo[0] < mouse[0] < self.geo[0] + self.geo[2] and self.geo[1] < mouse[1] < self.geo[1] + self.geo[3]: # Checking if the mouse is within the boundaries
@@ -163,7 +169,8 @@ def mainMenu(COLOUR_SCHEME): # Main Menu Loop
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 for button in mButtons:
-                    button.callFunc(mouse)
+                    if button.getHasFunc():
+                        button.callFunc(mouse)
         
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']]) # refreshing the screen
         for x in mButtons:
@@ -179,6 +186,8 @@ def playMenu(grid, words, wordCoords, cleanWords, themeName, COLOUR_SCHEME): # G
     pygame.display.set_caption("Play Menu") # Changing the caption of the window
     pButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=mainMenu, geo=[WIDTH - 100, 0, 100, 50], text="Main Menu", params=[COLOUR_SCHEME])) # Adding a button to fall back to the main menu
     pButtons.append(timeDisp := Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[WIDTH - 100, 50, 100, 50], text="Time: "))
+
+    # declaring variables
 
     words = sorted(words, key=len, reverse=True)
     cleanWords = sorted(cleanWords, key=len, reverse=True)
@@ -217,7 +226,8 @@ def playMenu(grid, words, wordCoords, cleanWords, themeName, COLOUR_SCHEME): # G
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 for button in pButtons:
-                    button.callFunc(pygame.mouse.get_pos()) # Calling the functions associated with buttons
+                    if button.getHasFunc():
+                        button.callFunc(pygame.mouse.get_pos()) # Calling the functions associated with buttons
 
                 for row in cells: # for every row in the cells array
                     for cell in row:  # for every item in each row
@@ -265,20 +275,20 @@ def playMenu(grid, words, wordCoords, cleanWords, themeName, COLOUR_SCHEME): # G
                 wordCoords.pop(idx) # removing word from lists
                 wordDisplay.pop(idx)
 
-        if wordDisplay == []:
-            finishTime = time.time()
-            totalTime = finishTime - startTime
-            return finishMenu(COLOUR_SCHEME, totalTime, themeName)
+        if wordDisplay == []: # if there are no words left
+            finishTime = time.time() # getting current time
+            totalTime = finishTime - startTime # getting total time
+            return finishMenu(COLOUR_SCHEME, totalTime, themeName) # sending user to finish menu
 
-        curTime = time.time()
-        nowTime = curTime - startTime
+        curTime = time.time() # getting time
+        nowTime = curTime - startTime # calculating time taken
         curMins = int(nowTime // 60)
-        curSecs = int(nowTime % 60)
-        timeDisp.setText(f"Time: {curMins}:{curSecs:02d}")
+        curSecs = int(nowTime % 60) # parsing to mins / secs
+        timeDisp.setText(f"Time: {curMins}:{curSecs:02d}") # displaying current time taken
 
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']]) # clearing the screen
         for x in pButtons: x.draw() # redrawing buttons
-        for x in wordDisplay: x.draw()
+        for x in wordDisplay: x.draw() # drawing words
 
         for row in cells: 
             for cell in row: cell.draw() # drawing the cells to the screen
@@ -311,7 +321,7 @@ def settingsMenu(COLOUR_SCHEME): # Settings Menu Loop
     sButtons = [] 
     pygame.display.set_caption("Settings Menu") # Changing the caption of the window
     sButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=mainMenu, geo=[WIDTH-100, 0, 100, 50], text="Main Menu", params=[COLOUR_SCHEME])) # Adding a button to fall back to the main menu
-    sButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=changeColourTheme, geo=[50, 100, 100, 50], text="Change Theme", params=[COLOUR_SCHEME], hasReturn=True))
+    sButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=changeColourTheme, geo=[50, 100, 110, 50], text="Change Theme", params=[COLOUR_SCHEME], hasReturn=True))
 
 
     while True: # Beginning a loop for the game
@@ -323,12 +333,14 @@ def settingsMenu(COLOUR_SCHEME): # Settings Menu Loop
                 for button in sButtons:
                     if not button.getHasReturn():
                         button.setParams([COLOUR_SCHEME])
-                        button.callFunc(mouse) # Calling button functions
+                        if button.getHasFunc():
+                            button.callFunc(mouse) # Calling button functions
                     else:
-                        COLOUR_SCHEME = [button.getFunc(mouse)(*button.getParams())]                    
+                        if button.getHasFunc():
+                            COLOUR_SCHEME = [button.getFunc(mouse)(*button.getParams())] # getting the new colour scheme            
 
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']])
-        for x in sButtons: x.draw(); x.updateColour(COLOURS[COLOUR_SCHEME[0]['buttons']]); x.updateTextColour(COLOURS[COLOUR_SCHEME[0]['text']])
+        for x in sButtons: x.draw(); x.updateColour(COLOURS[COLOUR_SCHEME[0]['buttons']]); x.updateTextColour(COLOURS[COLOUR_SCHEME[0]['text']]) # updaing buttons to new colour scheme
         
         
         pygame.display.flip()
@@ -336,15 +348,29 @@ def settingsMenu(COLOUR_SCHEME): # Settings Menu Loop
 
 def leaderboardMenu(COLOUR_SCHEME): # Leaderboard Menu Loop
     lButtons = []
+    titleButtons = []
     lButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=mainMenu, geo=[0, 0, 100, 50], text="Main Menu", params=[COLOUR_SCHEME])) # fallback button for main menu
+    lButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttonsVar2']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=wipeDB, geo=[WIDTH/2 - 75, HEIGHT-50, 150, 50], text="Clear Database", params=[COLOUR_SCHEME]))
+
+    titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[225, 110, 100, 50], text="User Name")) # column name
+    titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[590, 110, 100, 50], text="Theme Name")) # column name
+    titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[990, 110, 100, 50], text="Time Taken")) # column name
 
     pygame.display.set_caption("Leaderboard")
 
-    conn = sql.connect('components/database.db')
+    conn = sql.connect('components/database.db') # connecting to the database
     cursor = conn.cursor()
 
-    data = cursor.execute("SELECT * FROM Players ORDER BY time ASC").fetchall()
-    print(data)
+    data = cursor.execute("SELECT * FROM Players ORDER BY time ASC").fetchall() # getting all data from database
+
+    conn.commit()
+    conn.close()
+
+    for idx, item in enumerate(data):
+        if idx < 8:
+            titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[105, 160+(60*idx), 100, 50], text=item[1]))
+            titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[435, 160+(60*idx), 100, 50], text=item[2]))
+            titleButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[(WIDTH-430)+5, 160+(60*idx), 100, 50], text=item[3])) # writing the rows in
 
     while True: # Beginning a loop for the game
         for event in pygame.event.get():
@@ -353,11 +379,24 @@ def leaderboardMenu(COLOUR_SCHEME): # Leaderboard Menu Loop
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 for button in lButtons:
-                    button.callFunc(mouse) # Calling button functions
+                    if button.getHasFunc():
+                        button.callFunc(mouse) # Calling button functions
         
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']])
         for x in lButtons: x.draw()
-        
+        for x in titleButtons: x.draw() # drawing all titles
+
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(100, 100), pygame.math.Vector2(WIDTH-100, 100), 3) # top line for box
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(100, HEIGHT-100), pygame.math.Vector2(WIDTH-100, HEIGHT-100), 3) # bottom line for box
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(100, 100), pygame.math.Vector2(100, HEIGHT-100), 3) # left line for box
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(WIDTH-100, 100), pygame.math.Vector2(WIDTH-100, HEIGHT-100), 3) # right line for box
+
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(430, 100), pygame.math.Vector2(430, HEIGHT-100), 3) # left hand divider
+        pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(WIDTH-430, 100), pygame.math.Vector2(WIDTH-430, HEIGHT-100), 3) # right hand divider
+
+        for i in range(8):
+            pygame.draw.line(window, COLOURS[COLOUR_SCHEME[0]['lines']], pygame.math.Vector2(100, 150+(60*i)), pygame.math.Vector2(WIDTH-100, 150+(60*i)), 3) # center dividers
+
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -367,7 +406,9 @@ def finishMenu(COLOUR_SCHEME, timeTaken, themeName): # Finish Menu Loop
     pygame.display.set_caption("Main Menu") # Settings the title of the game window
 
     timeMins = int(timeTaken // 60)
-    timeSecs = int(timeTaken % 60)
+    timeSecs = int(timeTaken % 60) # parsing time into displayable format
+
+    # creating buttons and boxes to display at the end
 
     fButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], func=mainMenu, geo=[WIDTH - 100, 0, 100, 50], text="Main Menu", params=[COLOUR_SCHEME])) # Adding a button to fall back to the main menu
     fButtons.append(Button(colour=COLOURS[COLOUR_SCHEME[0]['background']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[WIDTH / 4 - 315, HEIGHT / 4 + 75, WIDTH, HEIGHT / 3], text="Congratulations!", fontSize=175))
@@ -375,20 +416,21 @@ def finishMenu(COLOUR_SCHEME, timeTaken, themeName): # Finish Menu Loop
     fButtons.append(submitBtn := Button(colour=COLOURS[COLOUR_SCHEME[0]['buttons']], tColour=COLOURS[COLOUR_SCHEME[0]['text']], geo=[(WIDTH / 2) - 50, HEIGHT - 50, 100, 50], text="Submit", fontSize=20, func=addToDatabase, params=[]))
     inputBoxes.append(nameBox := InputBox(geo=[(WIDTH / 2) - 300, (HEIGHT / 2) + 200, 200, 75], placeholderText="Enter Name", borderColour=COLOURS[COLOUR_SCHEME[0]['background']], borderThickness=0, colour=COLOURS[COLOUR_SCHEME[0]['text']], tColour=COLOURS[COLOUR_SCHEME[0]['background']])) # title input
 
-
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT: # allowing the user to quit the window
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
-                for button in fButtons: button.callFunc(mouse)
-                for inputBox in inputBoxes: inputBox.focus(mouse, inputBoxes)
+                for button in fButtons: 
+                    if button.getHasFunc():
+                        button.callFunc(mouse)
+                for inputBox in inputBoxes: inputBox.focus(mouse, inputBoxes) # focusing input box
             if event.type == pygame.KEYDOWN:
-                for inputBox in inputBoxes: inputBox.writeToText(event.unicode) 
+                for inputBox in inputBoxes: inputBox.writeToText(event.unicode) # adding text to button
 
-        username = nameBox.getText()
-        submitBtn.setParams([username, f"{timeMins}:{timeSecs:02d}", themeName, COLOUR_SCHEME])
+        username = nameBox.getText() # getting username
+        submitBtn.setParams([username, f"{timeMins}:{timeSecs:02d}", themeName, COLOUR_SCHEME]) # setting paramaters
         
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']]) # refreshing the screen
         for x in fButtons: x.draw() # drawing the buttons to screen
@@ -415,7 +457,8 @@ def newTheme(COLOUR_SCHEME): # input for new theme menu thingy
                 quit() # Quitting the window
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
-                for button in mButtons: button.callFunc(mouse) # Calling button functions
+                for button in mButtons: 
+                    if button.getHasFunc(): button.callFunc(mouse) # Calling button functions
                 for inputBox in inputBoxes: inputBox.focus(mouse, inputBoxes)
             if event.type == pygame.KEYDOWN:
                 for inputBox in inputBoxes: inputBox.writeToText(event.unicode) 
@@ -462,7 +505,8 @@ def themeChoice(COLOUR_SCHEME): # Theme Choice Menu Loop
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse = pygame.mouse.get_pos()
                 for button in themeButtons:
-                    button.callFunc(mouse) # Calling button functions
+                    if button.getHasFunc():
+                        button.callFunc(mouse) # Calling button functions
         
         window.fill(COLOURS[COLOUR_SCHEME[0]['background']])
         for x in themeButtons: x.draw() # Drawing the buttons
@@ -586,13 +630,16 @@ def changeColourTheme(COLOUR_SCHEME):
         settings = json.load(f)
     SELECTED_THEME = settings['ColourTheme']
 
-    if SELECTED_THEME.lower() == 'light': # swapping theme to dark
-        SELECTED_THEME = 'dark' 
-    elif SELECTED_THEME.lower() == 'dark': # swapping theme to high contrast
-        SELECTED_THEME = 'high_contrast'
-    else: # swapping theme to light
-        SELECTED_THEME = 'light'
- 
+    with open("components/colourTheme.json", "r") as f:
+        themes = json.load(f)
+
+    themeNames = [x for x in themes.keys()]
+    
+    for idx, name in enumerate(themeNames): 
+        if SELECTED_THEME == name:
+            SELECTED_THEME = themeNames[idx+1 if idx+1 < len(themeNames) else 0] # changed theme changing function to improve flexibility
+            break
+
     with open('components/settings.json', 'r') as f: 
         settings = json.load(f)
 
@@ -605,23 +652,34 @@ def changeColourTheme(COLOUR_SCHEME):
     return COLOUR_SCHEME
             
 def addToDatabase(username, timeTaken, themeName, COLOUR_SCHEME):
-
-    conn = sql.connect("components/database.db")
-    cursor = conn.cursor()
+    conn = sql.connect("components/database.db") # opening database
+    cursor = conn.cursor() # creating a cursor to interact with the database
 
     cursor.execute("CREATE TABLE IF NOT EXISTS Players ( id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(20), themeName VARCHAR(40), time INTEGER ) ")
+    # ^ creating a table if it isnt there with the values (username, themename, and time)
 
     cursor.execute(f"INSERT INTO Players(username, themeName, time) VALUES (?, ?, ?)", (username, themeName, timeTaken))
+    # ^ inserting the current users information into the database
 
-    conn.commit()
-    conn.close()
+    conn.commit() # commiting the data
+    conn.close() # closing the connection
 
-    return mainMenu(COLOUR_SCHEME)
+    return mainMenu(COLOUR_SCHEME) # sending the user to the main menu
+
+def wipeDB(COLOUR_SCHEME):
+    conn = sql.connect('components/database.db') # connecting to the database 
+    cursor = conn.cursor() # creating a cursor to interact with the data
+    cursor.execute("DROP TABLE Players") # dropping the player table to wipe it clean
+    cursor.execute("CREATE TABLE IF NOT EXISTS Players ( id INTEGER PRIMARY KEY AUTOINCREMENT, username VARCHAR(20), themeName VARCHAR(40), time INTEGER ) ") # re-creating the player table
+    conn.commit() # commiting changes
+    conn.close() # closing the connection
+
+    return leaderboardMenu(COLOUR_SCHEME) # refreshing the screen
 
 if __name__ == "__main__":
     with open("components/settings.json", "r") as f:
         settings = json.load(f)
-    SELECTED_THEME = settings['ColourTheme']
+    SELECTED_THEME = settings['ColourTheme'] # loading the colour theme
     
     with open("components/colourTheme.json", "r") as f:
         colThemes = json.load(f)
@@ -634,9 +692,10 @@ if __name__ == "__main__":
         "BLUE": (0, 100, 255),
         "DARK_BLUE": (0, 0, 120),
         "GREEN": (0, 255, 0),
+        "DARK_GREEN": (0, 120, 0),
         "RED": (255, 50, 50),
-        "YELLOW": (0, 255, 255),
         "DARK_RED": (120, 0, 0),
+        "YELLOW": (255, 255, 0),
         "DARK_GRAY": (25, 25, 25),
         "PASTEL_RED": (255, 173, 173),
         "PASTEL_ORANGE": (255, 214, 165),
@@ -645,10 +704,10 @@ if __name__ == "__main__":
         "PASTEL_BLUE": (155, 246, 255), 
         "PASTEL_PURPLE": (189, 178, 255),
         "PASTEL_PINK": (255, 198, 255)
-    }
+    } # declaring colours
 
     WIDTH, HEIGHT = 1280, 720
-    FPS = 30
+    FPS = 60
     clock = pygame.time.Clock()
     window = pygame.display.set_mode((WIDTH, HEIGHT))
     mainMenu(COLOUR_THEME)
