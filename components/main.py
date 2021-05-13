@@ -86,7 +86,7 @@ class GridCell:
 
     def onClick(self, mouse, colour=(0, 255, 0)):
         if self.geo[0] < mouse[0] < self.geo[0] + self.geo[2] and self.geo[1] < mouse[1] < self.geo[1] + self.geo[3]:
-            self.colour = colour
+            self.colour = colour    
             return self.gridPos # return the grid position when clicked
         else: return None 
 
